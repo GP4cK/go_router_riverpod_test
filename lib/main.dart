@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 late GoRouter router;
@@ -33,39 +34,45 @@ GoRouter createRouter() {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key}) {
-    debugPrint('MyApp');
-  }
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(routerConfig: router);
+    return ProviderScope(child: MaterialApp.router(routerConfig: router));
   }
 }
 
-class Parent extends StatefulWidget {
-  Parent({super.key}) {
-    debugPrint('Parent');
-  }
+Stream<int> getStream() {
+  debugPrint('getStream called');
+  return Stream.value(0);
+}
+
+final streamProvider = StreamProvider.autoDispose<int>((ref) {
+  return getStream();
+});
+
+class Parent extends ConsumerStatefulWidget {
+  const Parent({super.key});
 
   @override
-  State<Parent> createState() => _ParentState();
+  ConsumerState<Parent> createState() => _ParentState();
 }
 
-class _ParentState extends State<Parent> {
+class _ParentState extends ConsumerState<Parent> {
   @override
   void initState() {
-    debugPrint('Parent initState');
     super.initState();
+    debugPrint('Parent initState');
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(streamProvider);
     debugPrint('Parent build');
     return Scaffold(
       body: Center(
         child: FilledButton(
-          onPressed: () => context.go('/child'),
+          onPressed: () => context.push('/child'),
           child: const Text('Go to child'),
         ),
       ),
@@ -74,9 +81,7 @@ class _ParentState extends State<Parent> {
 }
 
 class Child extends StatefulWidget {
-  Child({super.key}) {
-    debugPrint('Child');
-  }
+  const Child({super.key});
 
   @override
   State<Child> createState() => _ChildState();
@@ -95,7 +100,7 @@ class _ChildState extends State<Child> {
     return Scaffold(
       body: Center(
         child: FilledButton(
-          onPressed: () => context.go('/child/grandchild'),
+          onPressed: () => context.push('/child/grandchild'),
           child: const Text('Go to grandchild'),
         ),
       ),
@@ -114,7 +119,7 @@ class Grandchild extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: FilledButton(
-          onPressed: () => context.go('/'),
+          onPressed: () => context.push('/'),
           child: const Text('Go to Parent'),
         ),
       ),
